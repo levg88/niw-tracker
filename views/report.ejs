@@ -1,0 +1,121 @@
+<%- include('partials/head') %>
+
+<div class="report-actions no-print">
+  <a class="btn" href="/">← Dashboard</a>
+  <button class="btn btn-primary" type="button" onclick="window.print()">Print / save as PDF</button>
+</div>
+
+<article class="report card">
+  <header class="report-head">
+    <div>
+      <p class="eyebrow">EB-2 National Interest Waiver · self-petition</p>
+      <h1>Readiness report</h1>
+      <p class="muted">
+        <%= profile.fullName || 'Applicant name not set' %>
+        <% if (profile.field) { %> · <%= profile.field %><% } %>
+      </p>
+      <p class="small muted">
+        <% if (profile.targetFilingDate) { %>
+          Target filing date: <strong><%= formatDate(profile.targetFilingDate) %></strong> ·
+        <% } %>
+        Generated <%= formatDateTime(generatedAt) %>
+      </p>
+    </div>
+    <div class="report-score">
+      <div class="score-number"><%= summary.overallScore %><span>%</span></div>
+      <div class="small muted">weighted readiness</div>
+    </div>
+  </header>
+
+  <% if (profile.endeavorSummary) { %>
+    <section class="report-section">
+      <h2>Proposed endeavor</h2>
+      <p class="preserve"><%= profile.endeavorSummary %></p>
+    </section>
+  <% } %>
+
+  <section class="report-section">
+    <h2>Summary</h2>
+    <div class="report-stats">
+      <div><span class="stat-value"><%= summary.counts.strong %></span><span class="small muted">Strong</span></div>
+      <div><span class="stat-value"><%= summary.counts.ok %></span><span class="small muted">OK</span></div>
+      <div><span class="stat-value"><%= summary.counts.needs_improvement %></span><span class="small muted">Needs improvement</span></div>
+      <div><span class="stat-value"><%= summary.counts.missing %></span><span class="small muted">Missing</span></div>
+      <div><span class="stat-value"><%= summary.completedRequired %>/<%= summary.totalRequired %></span><span class="small muted">Required OK</span></div>
+      <div><span class="stat-value"><%= summary.totalDocuments %></span><span class="small muted">Documents</span></div>
+    </div>
+    <p class="small muted">
+      Readiness counts required items plus the three strongest exceptional-ability criteria.
+      This is a self-assessment, not a legal sufficiency determination or an approval prediction.
+    </p>
+  </section>
+
+  <section class="report-section">
+    <h2>Exceptional ability (8 CFR 204.5(k))</h2>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th scope="col">Criterion</th><th scope="col">Status</th><th scope="col">Score</th></tr>
+        </thead>
+        <tbody>
+          <% summary.exceptionalAbility.criteria.forEach((criterion) => { %>
+            <tr>
+              <td><%= criterion.title %></td>
+              <td><%- include('partials/status-badge', { status: criterion.status }) %></td>
+              <td><%= criterion.score %>%</td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <p class="small">
+      <strong><%= summary.exceptionalAbility.metCount %> of 3 required criteria met.</strong>
+      <%= summary.exceptionalAbility.satisfied
+        ? 'The regulatory threshold is met.'
+        : 'At least one more criterion must reach OK.' %>
+    </p>
+  </section>
+
+  <% grouped.forEach((group) => { %>
+    <section class="report-section">
+      <h2><%= group.title %></h2>
+      <p class="small muted"><%= group.legalBasis %></p>
+
+      <% group.items.forEach((state) => { %>
+        <div class="report-item">
+          <div class="report-item-head">
+            <h3><%= state.item.title %></h3>
+            <div class="report-item-status">
+              <%- include('partials/status-badge', { status: state.status }) %>
+              <strong><%= state.score %>%</strong>
+            </div>
+          </div>
+          <% if (state.progress.notes) { %>
+            <p><strong>Notes:</strong> <span class="preserve"><%= state.progress.notes %></span></p>
+          <% } %>
+          <% if (state.progress.improvements) { %>
+            <p><strong>Needs improvement:</strong> <span class="preserve"><%= state.progress.improvements %></span></p>
+          <% } %>
+          <% if (state.documents.length > 0) { %>
+            <p class="small"><strong>Documents:</strong>
+              <%= state.documents.map((document) => document.originalName).join(', ') %>
+            </p>
+          <% } else { %>
+            <p class="small muted">No documents uploaded.</p>
+          <% } %>
+        </div>
+      <% }) %>
+    </section>
+  <% }) %>
+
+  <footer class="report-foot">
+    <p>
+      <strong>Not legal advice.</strong> This report is an informational self-assessment aid
+      for a self-filing EB-2 National Interest Waiver case. It does not predict approval and
+      does not replace an immigration attorney. Verify current USCIS forms, fees, and policy
+      before filing.
+    </p>
+  </footer>
+</article>
+
+<%- include('partials/foot') %>

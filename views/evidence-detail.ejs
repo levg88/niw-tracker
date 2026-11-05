@@ -1,0 +1,143 @@
+<%- include('partials/head') %>
+
+<nav class="breadcrumb" aria-label="Breadcrumb">
+  <a href="/evidence">Evidence</a>
+  <span>/</span>
+  <span><%= state.item.title %></span>
+</nav>
+
+<div class="page-head">
+  <div>
+    <p class="eyebrow">
+      <%= categories.find((category) => category.key === state.item.category).title %>
+    </p>
+    <h1><%= state.item.title %></h1>
+    <p class="lede"><%= state.item.description %></p>
+    <p class="small muted"><strong>Legal basis:</strong> <%= state.item.legalBasis %></p>
+    <p class="small muted">
+      <strong>Required:</strong> <%= state.item.required ? 'Yes' : 'No — optional evidence' %>
+      · <strong>Weight:</strong> <%= state.item.weight %>/5
+      <% if (state.item.code) { %> · <strong>Criterion:</strong> <%= state.item.code %><% } %>
+    </p>
+  </div>
+  <div class="status-panel card compact">
+    <div class="score-number"><%= state.score %><span>%</span></div>
+    <%- include('partials/status-badge', { status: state.status }) %>
+    <p class="small muted">
+      <%= state.checkedCount %> of <%= state.totalCriteria %> checks ·
+      <%= state.documents.length %> document<%= state.documents.length === 1 ? '' : 's' %>
+    </p>
+    <% if (state.progress.manualScore !== null) { %>
+      <p class="small">Manual override: <strong><%= state.progress.manualScore %></strong></p>
+    <% } %>
+  </div>
+</div>
+
+<%- include('partials/progress-bar', { score: state.score }) %>
+
+<section class="grid-2 align-start">
+  <form class="card" method="post" action="/evidence/<%= state.item.slug %>">
+    <h2>Checklist</h2>
+    <p class="muted small">
+      Tick each item you can document today. The score is the percentage checked unless you
+      set a manual override.
+    </p>
+
+    <ul class="checklist">
+      <% state.item.criteria.forEach((criterion, index) => { %>
+        <li>
+          <label class="check-row">
+            <input type="checkbox" name="criteria" value="<%= index %>"
+              <%= state.progress.checkedCriteria.includes(index) ? 'checked' : '' %>>
+            <span><%= criterion %></span>
+          </label>
+        </li>
+      <% }) %>
+    </ul>
+
+    <div class="field">
+      <label for="manual_score">Manual score override (0–100)</label>
+      <input id="manual_score" name="manual_score" type="number" min="0" max="100" step="1"
+        value="<%= state.progress.manualScore === null ? '' : state.progress.manualScore %>"
+        placeholder="Leave blank to use the checklist">
+      <p class="small muted">
+        Use this only when you have a considered reason to override the checklist score.
+      </p>
+    </div>
+
+    <div class="field">
+      <label for="notes">Notes</label>
+      <textarea id="notes" name="notes" rows="4"
+        placeholder="What is in the file, where it is, and any caveats."><%= state.progress.notes %></textarea>
+    </div>
+
+    <div class="field">
+      <label for="improvements">Improvements needed</label>
+      <textarea id="improvements" name="improvements" rows="4"
+        placeholder="What is still missing or weak?"><%= state.progress.improvements %></textarea>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Save progress</button>
+      <button class="btn btn-ghost" type="submit"
+        formaction="/evidence/<%= state.item.slug %>/reset"
+        onclick="return confirm('Reset the checklist, score, notes, and improvements for this item? Uploaded documents are kept.');">
+        Reset
+      </button>
+    </div>
+    <% if (state.progress.lastReviewed) { %>
+      <p class="small muted">Last reviewed <%= formatDateTime(state.progress.lastReviewed) %></p>
+    <% } %>
+  </form>
+
+  <div class="stack">
+    <section class="card">
+      <h2>Documents</h2>
+      <p class="muted small">
+        PDF, DOCX, TXT, MD, or image · up to <%= maxUploadMb %> MB each (5 at a time).
+        Files stay on this machine.
+      </p>
+
+      <form class="upload-form" method="post"
+        action="/evidence/<%= state.item.slug %>/documents"
+        enctype="multipart/form-data">
+        <input type="file" name="documents" multiple
+          accept=".pdf,.doc,.docx,.rtf,.txt,.md,.png,.jpg,.jpeg,.webp,.tif,.tiff">
+        <button class="btn btn-primary" type="submit">Upload</button>
+      </form>
+
+      <% if (state.documents.length === 0) { %>
+        <p class="empty">No documents uploaded yet.</p>
+      <% } else { %>
+        <ul class="doc-list">
+          <% state.documents.forEach((document) => { %>
+            <li>
+              <div>
+                <a href="/documents/<%= document.id %>"><%= document.originalName %></a>
+                <div class="small muted">
+                  <%= formatBytes(document.size) %> · <%= formatDateTime(document.uploadedAt) %>
+                </div>
+              </div>
+              <form method="post" action="/documents/<%= document.id %>/delete"
+                onsubmit="return confirm('Delete this document?');">
+                <button class="btn btn-danger btn-small" type="submit">Delete</button>
+              </form>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </section>
+
+    <section class="card">
+      <h2>Improvement tips</h2>
+      <ul class="tips">
+        <% state.item.tips.forEach((tip) => { %><li><%= tip %></li><% }) %>
+      </ul>
+      <p class="small muted">
+        Scores are a self-assessment aid. They are not a legal sufficiency determination.
+      </p>
+    </section>
+  </div>
+</section>
+
+<%- include('partials/foot') %>

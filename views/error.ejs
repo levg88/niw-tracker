@@ -1,0 +1,13 @@
+<%- include('partials/head') %>
+
+<div class="card error-card">
+  <p class="eyebrow">Error <%= statusCode %></p>
+  <h1><%= title %></h1>
+  <p class="lede"><%= message %></p>
+  <div class="hero-actions">
+    <a class="btn btn-primary" href="/">Back to dashboard</a>
+    <a class="btn" href="/evidence">Evidence</a>
+  </div>
+</div>
+
+<%- include('partials/foot') %>

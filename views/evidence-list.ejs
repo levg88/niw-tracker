@@ -1,0 +1,71 @@
+<%- include('partials/head') %>
+
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Evidence catalog</p>
+    <h1>All evidence items</h1>
+    <p class="lede">
+      Work through each item, tick the checklist, and upload the supporting document.
+      Status is derived from the checklist score and the documents you attach.
+    </p>
+  </div>
+  <div class="page-head-score card compact">
+    <div class="score-number small"><%= summary.overallScore %><span>%</span></div>
+    <div class="small muted">weighted readiness</div>
+    <a class="small" href="/report">Open report →</a>
+  </div>
+</div>
+
+<section class="legend card">
+  <div><%- include('partials/status-badge', { status: 'missing' }) %><span class="small muted">No score and no documents</span></div>
+  <div><%- include('partials/status-badge', { status: 'needs_improvement' }) %><span class="small muted">Score &lt; 70 or unscored with documents</span></div>
+  <div><%- include('partials/status-badge', { status: 'ok' }) %><span class="small muted">Score 70–84</span></div>
+  <div><%- include('partials/status-badge', { status: 'strong' }) %><span class="small muted">Score ≥ 85</span></div>
+</section>
+
+<% grouped.forEach((group) => { %>
+  <section class="card category-section">
+    <div class="section-head">
+      <div>
+        <h2><%= group.title %></h2>
+        <p class="muted small"><%= group.description %></p>
+        <p class="small muted"><strong>Legal basis:</strong> <%= group.legalBasis %></p>
+      </div>
+      <div class="section-score">
+        <div class="score-number small"><%= group.summary ? group.summary.score : 0 %><span>%</span></div>
+        <div class="small muted"><%= group.summary ? group.summary.itemCount : group.items.length %> items</div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Item</th>
+            <th scope="col">Status</th>
+            <th scope="col">Score</th>
+            <th scope="col">Docs</th>
+            <th scope="col">Weight</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% group.items.forEach((state) => { %>
+            <tr>
+              <td>
+                <a href="/evidence/<%= state.item.slug %>"><%= state.item.title %></a>
+                <% if (state.item.required) { %><span class="pill pill-required">Required</span><% } %>
+                <div class="small muted"><%= state.checkedCount %>/<%= state.totalCriteria %> checks</div>
+              </td>
+              <td><%- include('partials/status-badge', { status: state.status }) %></td>
+              <td><strong><%= state.score %>%</strong></td>
+              <td><%= state.documents.length %></td>
+              <td><%= state.item.weight %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<% }) %>
+
+<%- include('partials/foot') %>

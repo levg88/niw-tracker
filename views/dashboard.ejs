@@ -1,0 +1,188 @@
+<%- include('partials/head') %>
+
+<section class="hero card">
+  <div class="hero-copy">
+    <p class="eyebrow">Case readiness</p>
+    <h1>NIW evidence dashboard</h1>
+    <p class="lede">
+      Track every document and evidence item for an EB-2 National Interest Waiver
+      self-petition. Scores are a self-assessment aid, not a prediction of approval.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="/evidence">Review evidence</a>
+      <a class="btn" href="/report">Open readiness report</a>
+    </div>
+  </div>
+  <div class="score-panel">
+    <div class="score-number"><%= summary.overallScore %><span>%</span></div>
+    <div class="score-label">weighted readiness</div>
+    <%- include('partials/progress-bar', { score: summary.overallScore }) %>
+    <p class="small muted">
+      Counts required items plus your three strongest exceptional-ability criteria.
+    </p>
+  </div>
+</section>
+
+<section class="stat-grid" aria-label="Status summary">
+  <div class="stat card">
+    <div class="stat-value"><%= summary.counts.strong %></div>
+    <div class="stat-label">Strong</div>
+    <p class="small muted">Score ≥ 85</p>
+  </div>
+  <div class="stat card">
+    <div class="stat-value"><%= summary.counts.ok %></div>
+    <div class="stat-label">OK</div>
+    <p class="small muted">Score 70–84</p>
+  </div>
+  <div class="stat card">
+    <div class="stat-value"><%= summary.counts.needs_improvement %></div>
+    <div class="stat-label">Needs improvement</div>
+    <p class="small muted">Score &lt; 70 or unscored</p>
+  </div>
+  <div class="stat card">
+    <div class="stat-value"><%= summary.counts.missing %></div>
+    <div class="stat-label">Missing</div>
+    <p class="small muted">No score, no documents</p>
+  </div>
+  <div class="stat card">
+    <div class="stat-value"><%= summary.completedRequired %>/<%= summary.totalRequired %></div>
+    <div class="stat-label">Required items OK</div>
+    <p class="small muted"><%= summary.totalDocuments %> document<%= summary.totalDocuments === 1 ? '' : 's' %> uploaded</p>
+  </div>
+</section>
+
+<% if (!caseProfile.fullName) { %>
+  <div class="notice">
+    <strong>Start with your case profile.</strong>
+    Add your name, field, and target filing date so the readiness report is complete.
+    <a href="/case">Open case profile →</a>
+  </div>
+<% } %>
+
+<section class="grid-2">
+  <div class="card">
+    <div class="section-head">
+      <div>
+        <h2>Exceptional ability</h2>
+        <p class="muted small">
+          At least three of the seven criteria must be documented. More is fine, but three
+          strong criteria beat seven weak ones.
+        </p>
+      </div>
+      <div class="ea-count <%= summary.exceptionalAbility.satisfied ? 'text-ok' : 'text-warn' %>">
+        <%= summary.exceptionalAbility.metCount %> / 3 met
+      </div>
+    </div>
+    <ul class="ea-grid">
+      <% summary.exceptionalAbility.criteria.forEach((criterion) => { %>
+        <li class="ea-item <%= criterion.met ? 'ea-met' : '' %>">
+          <span class="ea-code"><%= criterion.code %></span>
+          <a class="ea-title" href="/evidence/<%= criterion.slug %>"><%= criterion.title %></a>
+          <%- include('partials/status-badge', { status: criterion.status }) %>
+          <span class="small muted ea-score"><%= criterion.score %>%</span>
+        </li>
+      <% }) %>
+    </ul>
+    <% if (!summary.exceptionalAbility.satisfied) { %>
+      <p class="small text-warn">
+        You still need <%= 3 - summary.exceptionalAbility.metCount %> more
+        criterion<%= (3 - summary.exceptionalAbility.metCount) === 1 ? '' : 'a' %> at OK or stronger.
+      </p>
+    <% } %>
+  </div>
+
+  <div class="card">
+    <div class="section-head">
+      <div>
+        <h2>Next actions</h2>
+        <p class="muted small">Required items below OK, plus the criteria needed to reach three.</p>
+      </div>
+    </div>
+    <% if (summary.nextActions.length === 0) { %>
+      <p class="empty">Nothing required is currently below OK. Review the optional items for extra strength.</p>
+    <% } else { %>
+      <ol class="action-list">
+        <% summary.nextActions.forEach((action) => { %>
+          <li>
+            <div class="action-head">
+              <a href="/evidence/<%= action.slug %>"><%= action.title %></a>
+              <%- include('partials/status-badge', { status: action.status }) %>
+            </div>
+            <p class="small muted"><%= action.score %>% · weight <%= action.weight %>/5</p>
+            <ul class="tips">
+              <% action.tips.forEach((tip) => { %><li><%= tip %></li><% }) %>
+            </ul>
+          </li>
+        <% }) %>
+      </ol>
+    <% } %>
+  </div>
+</section>
+
+<section class="card">
+  <div class="section-head">
+    <div>
+      <h2>Category progress</h2>
+      <p class="muted small">Weighted average of every item in each category.</p>
+    </div>
+  </div>
+  <div class="category-grid">
+    <% summary.categories.forEach((category) => { %>
+      <div class="category-card">
+        <div class="category-head">
+          <h3><%= category.shortTitle %></h3>
+          <span class="category-score"><%= category.score %>%</span>
+        </div>
+        <%- include('partials/progress-bar', { score: category.score }) %>
+        <p class="small muted">
+          <%= category.counts.ok + category.counts.strong %> of <%= category.itemCount %> OK or stronger
+          <% if (category.requiredRemaining > 0) { %> · <%= category.requiredRemaining %> required remaining<% } %>
+        </p>
+      </div>
+    <% }) %>
+  </div>
+</section>
+
+<section class="grid-2">
+  <div class="card">
+    <h2>Recent uploads</h2>
+    <% if (recentDocuments.length === 0) { %>
+      <p class="empty">No documents uploaded yet. Open an evidence item to add the first one.</p>
+    <% } else { %>
+      <ul class="doc-list compact-list">
+        <% recentDocuments.forEach((document) => { %>
+          <li>
+            <div>
+              <a href="/documents/<%= document.id %>"><%= document.originalName %></a>
+              <div class="small muted">
+                <a href="/evidence/<%= document.itemSlug %>"><%= document.itemTitle %></a>
+                · <%= formatBytes(document.size) %>
+              </div>
+            </div>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </div>
+
+  <div class="card">
+    <h2>Recent activity</h2>
+    <% if (activity.length === 0) { %>
+      <p class="empty">Activity appears here as you save progress and upload documents.</p>
+    <% } else { %>
+      <ul class="activity-list">
+        <% activity.forEach((entry) => { %>
+          <li>
+            <span class="activity-dot"></span>
+            <div>
+              <div><%= entry.detail || entry.action %></div>
+              <div class="small muted"><%= entry.action %> · <%= formatDateTime(entry.createdAt) %></div>
+            </div>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </div>
+</section>
+
+<%- include('partials/foot') %>

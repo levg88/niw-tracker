@@ -1,0 +1,57 @@
+<%- include('partials/head') %>
+
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Case profile</p>
+    <h1>Your case details</h1>
+    <p class="lede">
+      These details appear on the printable readiness report. They are stored only in the
+      local database on this machine.
+    </p>
+  </div>
+</div>
+
+<form class="card form-card" method="post" action="/case">
+  <div class="form-grid">
+    <div class="field">
+      <label for="full_name">Full name</label>
+      <input id="full_name" name="full_name" type="text" value="<%= profile.fullName %>" autocomplete="name">
+    </div>
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" value="<%= profile.email %>" autocomplete="email">
+    </div>
+  </div>
+
+  <div class="form-grid">
+    <div class="field">
+      <label for="field">Field of exceptional ability</label>
+      <input id="field" name="field" type="text" value="<%= profile.field %>"
+        placeholder="e.g. computational biology, fintech infrastructure">
+    </div>
+    <div class="field">
+      <label for="target_filing_date">Target filing date</label>
+      <input id="target_filing_date" name="target_filing_date" type="date" value="<%= profile.targetFilingDate %>">
+    </div>
+  </div>
+
+  <div class="field">
+    <label for="endeavor_summary">Proposed endeavor — one paragraph</label>
+    <textarea id="endeavor_summary" name="endeavor_summary" rows="6"
+      placeholder="Describe the specific work you will do in the United States and the national interest it serves."><%= profile.endeavorSummary %></textarea>
+    <p class="small muted">
+      Keep this specific and consistent with your CV, recommendation letters, and prong 1 evidence.
+    </p>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">Save case profile</button>
+    <a class="btn" href="/report">View report</a>
+  </div>
+
+  <% if (profile.updatedAt) { %>
+    <p class="small muted">Last saved <%= formatDateTime(profile.updatedAt) %></p>
+  <% } %>
+</form>
+
+<%- include('partials/foot') %>
