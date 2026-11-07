@@ -1,3 +1,10 @@
+/**
+ * Pure scoring and readiness-summary functions.
+ *
+ * No I/O or database access: everything operates on in-memory state. Used by
+ * routes, the repository (via buildItemState), and tests.
+ */
+
 import { CATEGORIES } from './catalog';
 import type {
   CategorySummary,
@@ -24,6 +31,7 @@ export const STATUS_ORDER: Status[] = ['missing', 'needs_improvement', 'ok', 'st
 /** The number of exceptional-ability criteria that must be met. */
 export const EXCEPTIONAL_ABILITY_TARGET = 3;
 
+/** Clamp a numeric score to the 0–100 range and round to an integer. */
 export function clampScore(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.max(0, Math.min(100, Math.round(value)));
@@ -62,6 +70,7 @@ export function deriveStatus(score: number, documentCount: number): Status {
   return 'strong';
 }
 
+/** Convert a status enum value into a CSS class name. */
 export function statusClass(status: Status): string {
   return status.replace(/_/g, '-');
 }
@@ -87,6 +96,7 @@ export function emptyProgress(itemId: number): ItemProgress {
   };
 }
 
+/** Assemble an ItemState from an item, its progress, and its documents. */
 export function buildItemState(
   item: EvidenceItem,
   progress: ItemProgress,
@@ -115,6 +125,7 @@ function emptyCounts(): StatusCounts {
 }
 
 function weightedScore(items: ItemState[]): number {
+  // Weighted average of item scores, using each item's weight (min 1).
   let weightSum = 0;
   let total = 0;
   for (const state of items) {

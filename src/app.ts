@@ -1,3 +1,11 @@
+/**
+ * Express application factory.
+ *
+ * Builds and configures the Express app: middleware, view engine, static assets,
+ * routes, and error handling. Kept separate from server.ts so tests can create
+ * an isolated app against a temporary data directory.
+ */
+
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 
@@ -16,6 +24,7 @@ export interface AppHandle {
   close: () => void;
 }
 
+/** Format an ISO date or YYYY-MM-DD value for display. */
 function formatDate(value: string | null | undefined): string {
   if (!value) return '—';
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -35,6 +44,7 @@ function formatDate(value: string | null | undefined): string {
   }).format(date);
 }
 
+/** Format an ISO timestamp for display, including time of day. */
 function formatDateTime(value: string | null | undefined): string {
   if (!value) return '—';
   const date = new Date(value);
@@ -48,6 +58,7 @@ function formatDateTime(value: string | null | undefined): string {
   }).format(date);
 }
 
+/** Format a byte count as a human-readable size. */
 function formatBytes(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB'];

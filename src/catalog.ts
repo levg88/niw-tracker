@@ -1,3 +1,11 @@
+/**
+ * Static legal content for EB-2 NIW categories.
+ *
+ * Provides the evidence catalog (8 CFR 204.5(k) exceptional-ability criteria
+ * and Matter of Dhanasar prongs), category definitions, and lookup helpers.
+ * This is informational content, not legal advice.
+ */
+
 import type { CategoryDefinition, EvidenceDefinition } from './types';
 
 /**
@@ -896,10 +904,12 @@ export const EVIDENCE_CATALOG: EvidenceDefinition[] = [
 
 const BY_SLUG = new Map(EVIDENCE_CATALOG.map((item) => [item.slug, item]));
 
+/** Look up an evidence definition by its slug. */
 export function getDefinition(slug: string): EvidenceDefinition | undefined {
   return BY_SLUG.get(slug);
 }
 
+/** Return all evidence definitions in a given category. */
 export function definitionsForCategory(category: CategoryDefinition['key']): EvidenceDefinition[] {
   return EVIDENCE_CATALOG.filter((item) => item.category === category);
 }

@@ -1,3 +1,11 @@
+/**
+ * SQLite repository.
+ *
+ * All persistence for the tracker: evidence items, progress, documents, case
+ * profile, and activity log. Uses better-sqlite3 synchronously. The static
+ * catalog is upserted on construction without touching user progress.
+ */
+
 import Database from 'better-sqlite3';
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
@@ -92,6 +100,7 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
+/** Safely parse a JSON array column, returning [] on failure. */
 function parseJsonArray(value: string): unknown[] {
   try {
     const parsed: unknown = JSON.parse(value);
@@ -101,6 +110,7 @@ function parseJsonArray(value: string): unknown[] {
   }
 }
 
+/** Convert a database row into an EvidenceItem. */
 function mapItem(row: ItemRow): EvidenceItem {
   return {
     id: row.id,
@@ -122,6 +132,7 @@ function mapItem(row: ItemRow): EvidenceItem {
   };
 }
 
+/** Convert a progress row into an ItemProgress (empty when missing). */
 function mapProgress(row: ProgressRow | undefined, itemId: number): ItemProgress {
   if (!row) return emptyProgress(itemId);
   return {
@@ -137,6 +148,7 @@ function mapProgress(row: ProgressRow | undefined, itemId: number): ItemProgress
   };
 }
 
+/** Convert a document row into a DocumentRecord. */
 function mapDocument(row: DocumentRow): DocumentRecord {
   return {
     id: row.id,
@@ -149,6 +161,7 @@ function mapDocument(row: DocumentRow): DocumentRecord {
   };
 }
 
+/** Convert a case row into a CaseProfile (empty when missing). */
 function mapCase(row: CaseRow | undefined): CaseProfile {
   if (!row) {
     return {
@@ -172,9 +185,11 @@ function mapCase(row: CaseRow | undefined): CaseProfile {
   };
 }
 
+/** Repository wrapping the SQLite database and all queries. */
 export class Repository {
   readonly db: Database.Database;
 
+  /** Open (or create) the database at dbPath and run migrations/catalog sync. */
   constructor(dbPath: string) {
     mkdirSync(path.dirname(dbPath), { recursive: true });
     this.db = new Database(dbPath);
@@ -184,10 +199,12 @@ export class Repository {
     this.syncCatalog();
   }
 
+  /** Close the underlying database connection. */
   close(): void {
     this.db.close();
   }
 
+  /** Create tables and indexes if they do not exist. */
   private migrate(): void {
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS case_profile (
@@ -290,6 +307,7 @@ export class Repository {
     run();
   }
 
+  /** Return all evidence items ordered by sort order. */
   listItems(): EvidenceItem[] {
     const rows = this.db
       .prepare('SELECT * FROM evidence_items ORDER BY sort_order ASC, id ASC')
@@ -297,6 +315,7 @@ export class Repository {
     return rows.map(mapItem);
   }
 
+  /** Look up an evidence item by slug. */
   getItemBySlug(slug: string): EvidenceItem | undefined {
     const row = this.db.prepare('SELECT * FROM evidence_items WHERE slug = ?').get(slug) as
       | ItemRow
@@ -304,6 +323,7 @@ export class Repository {
     return row ? mapItem(row) : undefined;
   }
 
+  /** Look up an evidence item by id. */
   getItemById(id: number): EvidenceItem | undefined {
     const row = this.db.prepare('SELECT * FROM evidence_items WHERE id = ?').get(id) as
       | ItemRow
@@ -311,6 +331,7 @@ export class Repository {
     return row ? mapItem(row) : undefined;
   }
 
+  /** Load progress for an item, or an empty progress if none exists. */
   getProgress(itemId: number): ItemProgress {
     const row = this.db.prepare('SELECT * FROM item_progress WHERE item_id = ?').get(itemId) as
       | ProgressRow
@@ -318,6 +339,7 @@ export class Repository {
     return mapProgress(row, itemId);
   }
 
+  /** Upsert progress for an item. */
   saveProgress(itemId: number, patch: ProgressPatch): void {
     const now = nowIso();
     this.db
@@ -344,10 +366,12 @@ export class Repository {
       );
   }
 
+  /** Delete progress for an item, resetting it to empty. */
   resetProgress(itemId: number): void {
     this.db.prepare('DELETE FROM item_progress WHERE item_id = ?').run(itemId);
   }
 
+  /** List documents for an item, newest first. */
   listDocuments(itemId: number): DocumentRecord[] {
     const rows = this.db
       .prepare('SELECT * FROM documents WHERE item_id = ? ORDER BY uploaded_at DESC, id DESC')
@@ -355,6 +379,7 @@ export class Repository {
     return rows.map(mapDocument);
   }
 
+  /** Look up a document by id. */
   getDocument(id: number): DocumentRecord | undefined {
     const row = this.db.prepare('SELECT * FROM documents WHERE id = ?').get(id) as
       | DocumentRow
@@ -362,6 +387,7 @@ export class Repository {
     return row ? mapDocument(row) : undefined;
   }
 
+  /** Insert a document row and return the created record. */
   addDocument(input: NewDocument): DocumentRecord {
     const result = this.db
       .prepare(
@@ -381,6 +407,7 @@ export class Repository {
     return created;
   }
 
+  /** Delete a document row and return the deleted record. */
   deleteDocument(id: number): DocumentRecord | undefined {
     const document = this.getDocument(id);
     if (!document) return undefined;
@@ -388,6 +415,7 @@ export class Repository {
     return document;
   }
 
+  /** Count all stored documents. */
   countDocuments(): number {
     const row = this.db.prepare('SELECT COUNT(*) AS count FROM documents').get() as {
       count: number;
@@ -395,6 +423,7 @@ export class Repository {
     return row.count;
   }
 
+  /** Return the most recently uploaded documents with item context. */
   recentDocuments(
     limit = 6,
   ): Array<DocumentRecord & { itemTitle: string; itemSlug: string }> {
@@ -414,6 +443,7 @@ export class Repository {
     }));
   }
 
+  /** Load the single case profile, or an empty one if unset. */
   getCaseProfile(): CaseProfile {
     const row = this.db.prepare('SELECT * FROM case_profile WHERE id = 1').get() as
       | CaseRow
@@ -421,6 +451,7 @@ export class Repository {
     return mapCase(row);
   }
 
+  /** Upsert the case profile and return the saved record. */
   saveCaseProfile(input: CaseProfileInput): CaseProfile {
     const now = nowIso();
     this.db
@@ -448,12 +479,14 @@ export class Repository {
     return this.getCaseProfile();
   }
 
+  /** Append an entry to the activity log. */
   log(action: string, detail = ''): void {
     this.db
       .prepare('INSERT INTO activity_log (action, detail, created_at) VALUES (?, ?, ?)')
       .run(action, detail, nowIso());
   }
 
+  /** Return the most recent activity log entries. */
   recentActivity(limit = 8): ActivityEntry[] {
     const rows = this.db
       .prepare('SELECT * FROM activity_log ORDER BY created_at DESC, id DESC LIMIT ?')
@@ -466,18 +499,21 @@ export class Repository {
     }));
   }
 
+  /** Build ItemState for every catalog item. */
   getAllStates(): ItemState[] {
     return this.listItems().map((item) =>
       buildItemState(item, this.getProgress(item.id), this.listDocuments(item.id)),
     );
   }
 
+  /** Build ItemState for a single item by slug. */
   getStateBySlug(slug: string): ItemState | undefined {
     const item = this.getItemBySlug(slug);
     if (!item) return undefined;
     return buildItemState(item, this.getProgress(item.id), this.listDocuments(item.id));
   }
 
+  /** Return aggregate counts for the health endpoint. */
   stats(): { items: number; documents: number; progressRows: number } {
     const items = this.db.prepare('SELECT COUNT(*) AS count FROM evidence_items').get() as {
       count: number;

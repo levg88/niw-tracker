@@ -1,3 +1,11 @@
+/**
+ * Route handlers for all pages and the JSON health endpoint.
+ *
+ * Registers Express routes on a Router using the shared RouteContext (repository
+ * and config). Kept separate from app.ts so routing logic is testable in
+ * isolation.
+ */
+
 import { existsSync, unlinkSync } from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -30,11 +38,13 @@ const ALLOWED_EXTENSIONS = new Set([
   '.tiff',
 ]);
 
+/** Coerce a form value to a bounded string. */
 function safeString(value: unknown, maxLength = 20000): string {
   if (typeof value !== 'string') return '';
   return value.slice(0, maxLength);
 }
 
+/** Redirect with a flash message or error query parameter. */
 function redirectWith(
   res: Response,
   location: string,
@@ -45,6 +55,7 @@ function redirectWith(
   res.redirect(`${location}${separator}${kind}=${encodeURIComponent(text)}`);
 }
 
+/** Render the 404 error page. */
 function notFound(res: Response, message = 'The page you requested does not exist.'): void {
   res.status(404).render('error', {
     title: 'Page not found',
@@ -53,6 +64,7 @@ function notFound(res: Response, message = 'The page you requested does not exis
   });
 }
 
+/** Parse and validate checked-criteria indices from form input. */
 function parseCheckedCriteria(raw: unknown, total: number): number[] {
   const values = Array.isArray(raw) ? raw : raw === undefined || raw === null ? [] : [raw];
   const checked = values
@@ -61,6 +73,7 @@ function parseCheckedCriteria(raw: unknown, total: number): number[] {
   return [...new Set(checked)].sort((a, b) => a - b);
 }
 
+/** Parse a manual score from form input, or null when blank/invalid. */
 function parseManualScore(raw: unknown): number | null {
   const text = typeof raw === 'string' ? raw.trim() : '';
   if (text === '') return null;
@@ -68,6 +81,7 @@ function parseManualScore(raw: unknown): number | null {
   return Number.isFinite(parsed) ? clampScore(parsed) : null;
 }
 
+/** Register all application routes on a new Express Router. */
 export function registerRoutes(context: RouteContext): Router {
   const { repo, config } = context;
   const router = express.Router();

@@ -1,3 +1,11 @@
+/**
+ * Server entry point.
+ *
+ * Loads configuration, creates the Express app, starts listening, and wires
+ * graceful shutdown on SIGINT/SIGTERM. Run via `npm start` (dist/server.js)
+ * or `npm run dev` (tsx watch).
+ */
+
 import { createApp } from './app';
 import { loadConfig } from './config';
 
@@ -14,6 +22,7 @@ const server = app.listen(config.port, config.host, () => {
   console.log('');
 });
 
+/** Gracefully close the HTTP server and database, then exit. */
 function shutdown(signal: string): void {
   console.log(`\n${signal} received — shutting down.`);
   server.close(() => {
