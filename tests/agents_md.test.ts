@@ -43,6 +43,7 @@ describe('markdown agent definitions', () => {
   it('loads the bundled agents from agents/*.md', () => {
     const definitions = loadAgentDefinitions();
     expect(definitions.map((definition) => definition.id).sort()).toEqual([
+      'fixer',
       'readiness_reviewer',
       'report_synthesizer',
     ]);
@@ -127,6 +128,7 @@ describe('markdown agent definitions', () => {
 
   it('lists agents for tooling', () => {
     expect(listAgents().map((agent) => agent.id).sort()).toEqual([
+      'fixer',
       'readiness_reviewer',
       'report_synthesizer',
     ]);
