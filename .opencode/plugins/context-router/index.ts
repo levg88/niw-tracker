@@ -3,7 +3,7 @@ import { readFile, readdir, stat } from "node:fs/promises"
 import path from "node:path"
 
 const MAX_TOPICS = 6
-const NOISE = new Set(["evidence", "documents", "files", "report", "data", "tests", "config", "uploads", "case"])
+const NOISE = new Set(["evidence", "documents", "files", "report", "data", "tests", "config", "uploads", "case", "agents"])
 const ROUTER_KEY = "context-router"
 const INBOX_KEY = "context-inbox"
 

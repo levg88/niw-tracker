@@ -10,7 +10,7 @@ import sys
 
 MAX_TOPICS = 6
 # Aliases too generic to trigger on their own (they match only inside a longer phrase).
-NOISE = {"evidence", "documents", "files", "report", "data", "tests", "config", "uploads", "case"}
+NOISE = {"evidence", "documents", "files", "report", "data", "tests", "config", "uploads", "case", "agents"}
 INBOX_DIR = "Context/_inbox"
 
 

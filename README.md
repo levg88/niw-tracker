@@ -85,6 +85,7 @@ All configuration is via environment variables:
 | `NIW_PORT` | `8770` | HTTP port |
 | `NIW_DATA_DIR` | `./data` | Directory for `niw.db` and `uploads/` |
 | `NIW_MAX_UPLOAD_MB` | `15` | Maximum size per uploaded file |
+| `NIW_AGENTS_DIR` | `<dataDir>/agents` | Override directory for agent definitions |
 
 There is **no authentication**. Keep the bind address on loopback and do not expose the app to the internet. The SQLite database and uploads are plain files; use full-disk encryption and a separate encrypted backup.
 
@@ -109,11 +110,22 @@ src/
 ├── catalog.ts      categories and the ~39-item evidence catalog
 ├── scoring.ts      score, status, readiness, and next-action logic
 ├── db.ts           SQLite schema, catalog sync, repository
+├── agents/         Markdown agent loader + dynamic runner (no per-role TS)
 └── types.ts        shared domain types
+agents/             Markdown agent definitions (readiness reviewer, report)
 views/              EJS templates (pages + partials)
 public/styles.css   responsive UI and print styles
 tests/              vitest + supertest suites
 ```
+
+## Extending
+
+Agent identity, prompts, task templates, and validation schemas live in
+Markdown files under `agents/`. A single script base,
+`src/agents/dynamic.ts`, runs any definition — there are no per-role
+TypeScript wrappers, so adding a role is one new `.md` file (plus a validator
+only if a new `schema:` name is needed). See `agents/README.md` for the file
+format and override rules (`<dataDir>/agents`, `NIW_AGENTS_DIR`).
 
 ## HTTP routes
 
@@ -149,7 +161,7 @@ npm test           # run the vitest suite
 npm test
 ```
 
-The suite covers scoring/status thresholds, readiness weighting, catalog integrity, SQLite persistence and cascades, and HTTP behavior (pages, 404s, progress save/reset, upload/download/delete, case profile, report, health).
+The suite covers scoring/status thresholds, readiness weighting, catalog integrity, SQLite persistence and cascades, HTTP behavior (pages, 404s, progress save/reset, upload/download/delete, case profile, report, health), and the Markdown agent loader + dynamic runner (`tests/agents_md.test.ts`).
 
 ## Privacy
 

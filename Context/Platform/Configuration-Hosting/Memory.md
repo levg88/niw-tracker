@@ -6,6 +6,7 @@
 
 ## Facts
 <!-- Stable, verified knowledge. One bullet per fact. Tagged. -->
+- Agent overrides resolve via `NIW_AGENTS_DIR` or `<dataDir>/agents` (`agentsDir` in `src/config.ts`). (General)
 
 ## Gotchas
 <!-- Traps, false-failure causes, timing quirks. Tagged. -->

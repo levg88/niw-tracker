@@ -19,6 +19,7 @@
 | Scoring Readiness | scoring, readiness score, status thresholds, weighted average, next actions, exceptional ability progress | `Context/Domain/Scoring-Readiness/Memory.md` |
 | Document Management | uploads, document upload, file storage, allowed extensions, download document, delete document | `Context/Domain/Document-Management/Memory.md` |
 | Readiness Report | readiness report, printable report, save as PDF, case profile, exhibit summary | `Context/Domain/Readiness-Report/Memory.md` |
+| Firm Agents | agents, agent definitions, agents/*.md, prompt loader, NIW_AGENTS_DIR | `Context/Domain/Firm-Agents/Memory.md` |
 | Data Storage | sqlite, database schema, niw.db, data directory, catalog sync, uploads directory | `Context/Platform/Data-Storage/Memory.md` |
 | Configuration Hosting | configuration, environment variables, NIW_PORT, NIW_DATA_DIR, upload limit, local-only | `Context/Platform/Configuration-Hosting/Memory.md` |
 | Testing CI | tests, vitest, supertest, github actions, typecheck, test suite | `Context/Platform/Testing-CI/Memory.md` |

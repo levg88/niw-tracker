@@ -23,6 +23,8 @@ export interface AppConfig {
   maxUploadMb: number;
   /** Maximum upload size in bytes (derived from maxUploadMb). */
   maxUploadBytes: number;
+  /** Absolute path to the agents override directory (`<dataDir>/agents`). */
+  agentsDir: string;
 }
 
 /**
@@ -49,5 +51,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     uploadsDir: path.join(dataDir, 'uploads'),
     maxUploadMb,
     maxUploadBytes: maxUploadMb * 1024 * 1024,
+    agentsDir: path.resolve(env.NIW_AGENTS_DIR?.trim() || path.join(dataDir, 'agents')),
   };
 }
